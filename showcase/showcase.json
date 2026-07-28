@@ -57,11 +57,6 @@
         "type": "skill",
         "name": "ui-reference-implementation",
         "purpose": "프로젝트 디자인 시스템을 기준으로 발표자료와 화면 스타일이 기존 UI 규칙에서 벗어나지 않도록 참고했습니다."
-      },
-      {
-        "type": "tool",
-        "name": "Terminal",
-        "purpose": "lint, build, 서버 실행, API health check, Gemini 샘플 호출을 통해 구현 결과를 확인했습니다."
       }
     ],
     "workflows": [
