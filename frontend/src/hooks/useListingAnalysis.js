@@ -4,11 +4,21 @@ import { loadUserInfo } from '../utils/userInfoStorage'
 
 const defaultUserInfo = {
   school: '',
+  contractType: '',
+  moveInDate: '',
   budget: '',
+  maxDeposit: '',
+  maxMonthlyRent: '',
+  maxMaintenanceFee: '',
+  useTotalBudget: false,
   commuteDaysPerWeek: '',
   returnTime: '',
-  gender: '',
-  hasLivingAloneExperience: '',
+  destination: '',
+  maxTravelTime: '',
+  transportation: [],
+  housingTypes: [],
+  priorities: [],
+  avoidConditions: [],
 }
 
 function hasListingContent(fields, ocrText) {
@@ -16,7 +26,7 @@ function hasListingContent(fields, ocrText) {
 }
 
 function hasRequiredUserInfo(userInfo) {
-  return Boolean(userInfo.school && userInfo.budget && userInfo.commuteDaysPerWeek && userInfo.returnTime)
+  return Boolean(userInfo.school && userInfo.contractType && userInfo.budget && userInfo.commuteDaysPerWeek)
 }
 
 export function createListingAnalysisRequest({ fields, imageName, imageType, ocrText }) {

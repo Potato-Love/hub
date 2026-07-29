@@ -28,6 +28,27 @@ function ListSection({ items, title }) {
   )
 }
 
+function DetailGroup({ items, title }) {
+  const visibleItems = items.filter((item) => item.content)
+  if (!visibleItems.length) {
+    return null
+  }
+
+  return (
+    <section className="analysis-card analysis-detail-group">
+      <h3>{title}</h3>
+      <div className="analysis-detail-list">
+        {visibleItems.map((item) => (
+          <div key={item.title}>
+            <h4>{item.title}</h4>
+            <p>{item.content}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function AnalysisResultPanel({ analysis }) {
   if (!analysis) {
     return null
@@ -44,9 +65,22 @@ function AnalysisResultPanel({ analysis }) {
       </div>
 
       <TextSection title="종합 의견">{analysis.summary}</TextSection>
-      <TextSection title="비용 분석">{analysis.costAnalysis}</TextSection>
-      <TextSection title="통학 분석">{analysis.commuteAnalysis}</TextSection>
-      <TextSection title="매물 신뢰도">{analysis.reliabilityAnalysis}</TextSection>
+      <DetailGroup
+        title="비용 판단"
+        items={[
+          { title: '가격 적정성', content: analysis.priceAnalysis || analysis.costAnalysis },
+          { title: '관리비', content: analysis.maintenanceFeeAnalysis },
+          { title: '교통비', content: analysis.transportationCostAnalysis },
+        ]}
+      />
+      <DetailGroup
+        title="생활과 이동"
+        items={[
+          { title: '통학', content: analysis.commuteAnalysis },
+          { title: '생활 편의성', content: analysis.convenienceAnalysis },
+          { title: '매물 신뢰도', content: analysis.reliabilityAnalysis },
+        ]}
+      />
       <ListSection title="용어 설명" items={analysis.termExplanations} />
       <ListSection title="주의할 점" items={analysis.risks} />
       <ListSection title="계약 전 체크리스트" items={analysis.checklist} />

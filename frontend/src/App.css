@@ -152,6 +152,18 @@
   gap: var(--space-4);
 }
 
+.field-stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.budget-step,
+.commute-step,
+.preference-panel {
+  display: grid;
+  gap: var(--space-6);
+}
+
 .review-panel {
   display: grid;
   gap: var(--space-6);
@@ -180,6 +192,7 @@
 }
 
 .choice-card {
+  position: relative;
   display: grid;
   gap: var(--space-1);
   min-height: 86px;
@@ -189,6 +202,10 @@
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md);
   cursor: pointer;
+}
+
+.choice-grid-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .choice-card input {
@@ -211,11 +228,28 @@
   border-color: var(--color-primary);
 }
 
-.choice-card.selected span::after {
-  content: " 선택됨";
+.selected-status {
   color: var(--color-primary);
   font-size: var(--font-size-caption);
   font-weight: var(--font-weight-medium);
+}
+
+.inline-check {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+.inline-check input {
+  flex: 0 0 auto;
+  width: var(--space-5);
+  height: var(--space-5);
+  margin: 0;
+  accent-color: var(--color-primary);
 }
 
 .summary-list {
@@ -461,10 +495,31 @@
   gap: var(--space-2);
 }
 
+.analysis-detail-group {
+  gap: var(--space-4);
+}
+
+.analysis-detail-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.analysis-detail-list div {
+  display: grid;
+  gap: var(--space-1);
+}
+
 .analysis-card h3 {
   margin: 0;
   color: var(--color-text-primary);
   font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-semibold);
+}
+
+.analysis-card h4 {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-label);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -536,6 +591,7 @@
 
   .form-grid,
   .choice-grid,
+  .choice-grid-three,
   .listing-fields {
     grid-template-columns: 1fr;
   }
