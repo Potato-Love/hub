@@ -105,13 +105,19 @@ function readVerificationDate(text) {
 }
 
 function normalizeAreaUnit(value) {
-  return value.replace(/\s+/g, '').replace(/m2|m²|제곱미터/gi, '㎡')
+  const normalized = String(value || '').replace(/\s+/g, '').replace(/m2|m²|제곱미터/gi, '㎡')
+  if (!normalized) {
+    return ''
+  }
+
+  return /㎡$/.test(normalized) ? normalized : `${normalized}㎡`
 }
 
 function readAreaRatio(text) {
   const normalized = normalizeOcrText(text)
   const ratioMatch = normalized.match(/전용률\s*([0-9.]+\s*%)/)
     || normalized.match(/\(\s*전용률\s*([0-9.]+)\s*\)/)
+    || normalized.match(/공급\s*\/\s*전용\s*면적[\s\S]{0,80}?\(\s*([0-9.]+)\s*%?\s*\)/)
   if (!ratioMatch) {
     return ''
   }
@@ -119,17 +125,38 @@ function readAreaRatio(text) {
   return ratioMatch[1].replace(/\s+/g, '').replace(/%?$/, '%')
 }
 
+function readCombinedAreaFromText(value, requireAreaLabel = false) {
+  const normalized = normalizeOcrText(value)
+    .replace(/[|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const areaUnit = '(?:㎡|m2|m²|제곱미터)'
+  const labeledPrefix = '(?:공급\\s*[\\/／]\\s*전용\\s*면적|공급\\s*전용\\s*면적|공급면적\\s*[\\/／]\\s*전용면적)'
+  const prefix = requireAreaLabel ? `${labeledPrefix}[^0-9]{0,30}` : ''
+  const match = normalized.match(
+    new RegExp(`${prefix}([0-9.]+)\\s*${areaUnit}?\\s*[\\/／]\\s*([0-9.]+)\\s*${areaUnit}?\\s*(?:\\(\\s*(?:전용률\\s*)?([0-9.]+)\\s*%?\\s*\\))?`, 'i'),
+  )
+
+  if (!match) {
+    return null
+  }
+
+  return {
+    supplyArea: normalizeAreaUnit(match[1]),
+    exclusiveArea: normalizeAreaUnit(match[2]),
+    areaRatio: match[3] ? `${match[3].replace(/\s+/g, '')}%` : '',
+  }
+}
+
 function readAreaFields(text) {
   const normalized = normalizeOcrText(text).replace(/\s+/g, ' ')
   const area = readAnyValueAfterLabel(text, ['공급/전용면적', '공급/전용 면적', '공급 전용면적'])
-  const combinedAreaMatch = `${area} ${normalized}`.match(
-    /([0-9.]+\s*(?:㎡|m2|m²|제곱미터))\s*\/\s*([0-9.]+\s*(?:㎡|m2|m²|제곱미터))/i,
-  )
+  const combinedArea = readCombinedAreaFromText(area) || readCombinedAreaFromText(normalized, true)
   const supplyOnlyMatch = normalized.match(/공급\s*(?:면적)?\s*([0-9.]+\s*(?:㎡|m2|m²|제곱미터))/i)
   const exclusiveOnlyMatch = normalized.match(/전용\s*(?:면적)?\s*([0-9.]+\s*(?:㎡|m2|m²|제곱미터))/i)
-  const areaRatio = readAreaRatio(text)
+  const areaRatio = combinedArea?.areaRatio || readAreaRatio(text)
 
-  if (!combinedAreaMatch) {
+  if (!combinedArea) {
     return {
       supplyArea: supplyOnlyMatch ? normalizeAreaUnit(supplyOnlyMatch[1]) : normalizeAreaUnit(area),
       exclusiveArea: exclusiveOnlyMatch ? normalizeAreaUnit(exclusiveOnlyMatch[1]) : '',
@@ -138,8 +165,8 @@ function readAreaFields(text) {
   }
 
   return {
-    supplyArea: normalizeAreaUnit(combinedAreaMatch[1]),
-    exclusiveArea: normalizeAreaUnit(combinedAreaMatch[2]),
+    supplyArea: combinedArea.supplyArea,
+    exclusiveArea: combinedArea.exclusiveArea,
     areaRatio,
   }
 }

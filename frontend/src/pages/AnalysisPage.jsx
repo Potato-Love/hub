@@ -26,7 +26,7 @@ function AnalysisPage({ analysisRequest, onBackToUpload }) {
         <section className="user-info-shell" aria-labelledby="page-title">
           <header className="app-header">
             <p className="brand-name">자취방 의사결정 도우미</p>
-            <h1 id="page-title">AI 분석 결과</h1>
+            <h1 id="page-title">분석 요청 오류</h1>
             <p className="page-description">
               분석할 매물 정보가 없어 요청을 시작하지 못했습니다.
             </p>
@@ -49,56 +49,22 @@ function AnalysisPage({ analysisRequest, onBackToUpload }) {
   }
 
   return (
-    <main className="user-info-page">
-      <section className="user-info-shell" aria-labelledby="page-title">
-        <header className="app-header">
-          <p className="brand-name">자취방 의사결정 도우미</p>
-          <h1 id="page-title">AI 분석 결과</h1>
-          <p className="page-description">
-            OCR 원문과 매물 정보를 사용자 조건과 함께 분석해 의사결정에 필요한 항목을 정리합니다.
-          </p>
-        </header>
-
-        <section className="form-card" aria-labelledby="analysis-page-title">
-          <div className="step-heading">
-            <h2 id="analysis-page-title">{isAnalyzing ? 'AI가 매물을 분석하고 있습니다' : '분석 결과를 확인해주세요'}</h2>
-            <p>
-              {isAnalyzing
-                ? '비용, 지도 기반 통학 시간, 매물 신뢰도, 계약 전 체크리스트를 구조화하고 있습니다.'
-                : '결과는 참고용이며 계약 전에는 실제 매물과 계약 조건을 직접 확인해야 합니다.'}
-            </p>
+    <main className="user-info-page analysis-page">
+      <section className="user-info-shell analysis-shell" aria-labelledby="page-title">
+        <section className="form-card analysis-dashboard-card" aria-labelledby="page-title">
+          <div className="analysis-dashboard-header">
+            <div className="step-heading compact-heading">
+              <h1 id="page-title">{isAnalyzing ? 'AI가 매물을 분석하고 있습니다' : '집토끼가 매물을 분석했어요'}</h1>
+            </div>
+            <div className="analysis-header-actions">
+              <button className="secondary-button" type="button" disabled>
+                저장
+              </button>
+              <button className="secondary-button" type="button" onClick={onBackToUpload}>
+                다른 매물 분석하기
+              </button>
+            </div>
           </div>
-
-          <section className="analysis-card analysis-request-summary" aria-labelledby="analysis-basis-title">
-            <h3 id="analysis-basis-title">분석 기준</h3>
-            <dl className="summary-list compact-summary-list">
-              <div>
-                <dt>학교/조건</dt>
-                <dd>
-                  {analysisRequest.userSummary.school} · {analysisRequest.userSummary.contractType} · {analysisRequest.userSummary.budget}
-                </dd>
-              </div>
-              <div>
-                <dt>통학 기준</dt>
-                <dd>
-                  {analysisRequest.userSummary.commuteDaysPerWeek} · {analysisRequest.userSummary.maxTravelTime}
-                </dd>
-              </div>
-              <div>
-                <dt>매물</dt>
-                <dd>
-                  {analysisRequest.listingSummary.address} · {analysisRequest.listingSummary.price}
-                </dd>
-              </div>
-            </dl>
-            {analysisRequest.warnings?.length > 0 && (
-              <ul className="warning-list">
-                {analysisRequest.warnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            )}
-          </section>
 
           {isAnalyzing && (
             <div className="analysis-loading-panel" role="status" aria-live="polite">
@@ -125,15 +91,11 @@ function AnalysisPage({ analysisRequest, onBackToUpload }) {
             </div>
           )}
 
-          <AnalysisResultPanel analysis={analysis} requestWarnings={analysisRequest.warnings} />
-
-          {analysis && (
-            <div className="button-row">
-              <button className="secondary-button" type="button" onClick={onBackToUpload}>
-                매물 정보로 돌아가기
-              </button>
-            </div>
-          )}
+          <AnalysisResultPanel
+            analysis={analysis}
+            analysisRequest={analysisRequest}
+            requestWarnings={analysisRequest.warnings}
+          />
         </section>
       </section>
     </main>

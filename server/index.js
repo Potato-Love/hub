@@ -20,6 +20,7 @@ const analysisSchema = {
     'overallScore',
     'decision',
     'summary',
+    'categoryScores',
     'priceAnalysis',
     'maintenanceFeeAnalysis',
     'commuteAnalysis',
@@ -39,9 +40,22 @@ const analysisSchema = {
     },
     decision: {
       type: 'string',
-      enum: ['추천', '주의', '비추천'],
+      enum: ['추천', '조건부추천', '비추천'],
     },
     summary: { type: 'string' },
+    categoryScores: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['area', 'cost', 'living', 'preference', 'safety', 'transport'],
+      properties: {
+        area: { type: 'number', minimum: 0, maximum: 100 },
+        cost: { type: 'number', minimum: 0, maximum: 100 },
+        living: { type: 'number', minimum: 0, maximum: 100 },
+        preference: { type: 'number', minimum: 0, maximum: 100 },
+        safety: { type: 'number', minimum: 0, maximum: 100 },
+        transport: { type: 'number', minimum: 0, maximum: 100 },
+      },
+    },
     priceAnalysis: { type: 'string' },
     maintenanceFeeAnalysis: { type: 'string' },
     commuteAnalysis: { type: 'string' },
@@ -88,7 +102,7 @@ function validateAnalyzeRequest(body) {
 }
 
 const systemInstruction =
-  '너는 대학생 첫 자취방 의사결정을 돕는 한국어 분석 도우미다. 부동산 계약의 최종 법률 판단을 대신하지 말고, 사용자가 확인해야 할 가격, 관리비, 통학, 교통비, 생활 편의성, 매물 신뢰도, 용어 이해 관점을 실용적으로 정리한다. 매물 유형, 거래 유형, 공급/전용면적, 층수, 방수/욕실수, 사용승인일, 방향, 주차, 건축물 용도, 매물번호, 확인매물 날짜가 있으면 분석에 적극 반영한다. 확실하지 않은 내용은 단정하지 말고 확인 필요로 표현한다.'
+  '너는 대학생 첫 자취방 의사결정을 돕는 한국어 분석 도우미다. 부동산 계약의 최종 법률 판단을 대신하지 말고, 사용자가 확인해야 할 가격, 관리비, 통학, 교통비, 생활 편의성, 매물 신뢰도, 용어 이해 관점을 실용적으로 정리한다. 매물 유형, 거래 유형, 공급/전용면적, 층수, 방수/욕실수, 사용승인일, 방향, 주차, 건축물 용도, 매물번호, 확인매물 날짜가 있으면 분석에 적극 반영한다. categoryScores는 면적, 주거비용, 주거환경, 사용자 선호, 안전/신뢰, 통학 항목을 각각 0~100점으로 평가한다. 확실하지 않은 내용은 단정하지 말고 확인 필요로 표현한다.'
 
 function createPrompt({ listingInfo, userInfo }) {
   return JSON.stringify(
@@ -158,9 +172,17 @@ app.post('/api/analyze-listing', async (request, response) => {
     })
   } catch (error) {
     const status = error?.status || 500
+    console.error('[analyze-listing] failed', {
+      status,
+      message: error?.message,
+      name: error?.name,
+    })
+
     const message = status === 401
       ? 'Gemini API 인증에 실패했습니다.'
-      : '분석 API 호출 중 오류가 발생했습니다.'
+      : error instanceof SyntaxError
+        ? 'AI 분석 응답 형식이 올바르지 않습니다.'
+        : '분석 API 호출 중 오류가 발생했습니다.'
 
     response.status(status).json({ error: message })
   }
