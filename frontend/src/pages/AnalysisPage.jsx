@@ -1,24 +1,60 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import AnalysisResultPanel from '../components/listing-upload/AnalysisResultPanel'
 import { useListingAnalysis } from '../hooks/useListingAnalysis'
 
-function AnalysisPage({ analysisRequest, onBackToUpload }) {
+function AnalysisPage({
+  initialAnalysis = null,
+  initialSelectedRouteMode = '',
+  initialSelectedRouteKey = '',
+  isSavedDetail = false,
+  onBackToHome,
+  onBackToUpload,
+  onSaveAnalysis,
+  analysisRequest,
+}) {
   const hasStarted = useRef(false)
+  const [selectedRouteMode, setSelectedRouteMode] = useState(initialSelectedRouteMode)
+  const [selectedRouteKey, setSelectedRouteKey] = useState(initialSelectedRouteKey || initialSelectedRouteMode)
+  const [saveError, setSaveError] = useState('')
   const {
     analysis,
     error,
     isAnalyzing,
     runAnalysis,
   } = useListingAnalysis()
+  const displayedAnalysis = initialAnalysis || analysis
+  const canSave = Boolean(!isSavedDetail && displayedAnalysis && analysisRequest)
+  const pageTitle = isAnalyzing
+    ? 'AI가 매물을 분석하고 있습니다'
+    : isSavedDetail
+      ? '저장한 매물 분석 결과'
+      : '집토끼가 매물을 분석했어요'
 
   useEffect(() => {
-    if (hasStarted.current || !analysisRequest) {
+    if (initialAnalysis || hasStarted.current || !analysisRequest) {
       return
     }
 
     hasStarted.current = true
     runAnalysis(analysisRequest)
-  }, [analysisRequest, runAnalysis])
+  }, [analysisRequest, initialAnalysis, runAnalysis])
+
+  function handleSave() {
+    if (!canSave) {
+      return
+    }
+
+    try {
+      onSaveAnalysis?.({
+        analysis: displayedAnalysis,
+        analysisRequest,
+        selectedRouteMode,
+        selectedRouteKey,
+      })
+    } catch (caughtError) {
+      setSaveError(caughtError.message || '분석 결과 저장 중 오류가 발생했습니다.')
+    }
+  }
 
   if (!analysisRequest) {
     return (
@@ -54,12 +90,19 @@ function AnalysisPage({ analysisRequest, onBackToUpload }) {
         <section className="form-card analysis-dashboard-card" aria-labelledby="page-title">
           <div className="analysis-dashboard-header">
             <div className="step-heading compact-heading">
-              <h1 id="page-title">{isAnalyzing ? 'AI가 매물을 분석하고 있습니다' : '집토끼가 매물을 분석했어요'}</h1>
+              <h1 id="page-title">{pageTitle}</h1>
             </div>
             <div className="analysis-header-actions">
-              <button className="secondary-button" type="button" disabled>
-                저장
-              </button>
+              {isSavedDetail && (
+                <button className="secondary-button" type="button" onClick={onBackToHome}>
+                  홈으로
+                </button>
+              )}
+              {!isSavedDetail && (
+                <button className="primary-button" type="button" disabled={!canSave} onClick={handleSave}>
+                  저장
+                </button>
+              )}
               <button className="secondary-button" type="button" onClick={onBackToUpload}>
                 다른 매물 분석하기
               </button>
@@ -91,9 +134,22 @@ function AnalysisPage({ analysisRequest, onBackToUpload }) {
             </div>
           )}
 
+          {saveError && (
+            <div className="analysis-error-panel" role="alert">
+              <h3>저장하지 못했습니다</h3>
+              <p>{saveError}</p>
+            </div>
+          )}
+
           <AnalysisResultPanel
-            analysis={analysis}
+            analysis={displayedAnalysis}
             analysisRequest={analysisRequest}
+            initialSelectedRouteMode={initialSelectedRouteKey || initialSelectedRouteMode}
+            onSelectedRouteModeChange={(nextRoute) => {
+              setSelectedRouteMode(nextRoute?.mode || '')
+              setSelectedRouteKey(nextRoute?.key || nextRoute?.mode || '')
+              setSaveError('')
+            }}
             requestWarnings={analysisRequest.warnings}
           />
         </section>

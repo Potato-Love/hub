@@ -680,20 +680,29 @@ function ListBlock({ items }) {
   )
 }
 
+function getRouteKey(route, index = 0) {
+  return route?.id || `${route?.mode || 'route'}-${index}`
+}
+
 function RouteMethodTabs({ routes, selectedRoute, setSelectedMode }) {
   return (
     <div className="route-mode-tabs" aria-label="통학 방법 선택">
-      {routes?.map((route) => (
-        <button
-          aria-pressed={selectedRoute?.mode === route.mode}
-          className={selectedRoute?.mode === route.mode ? 'route-mode-tab selected' : 'route-mode-tab'}
-          key={route.mode}
-          onClick={() => setSelectedMode(route.mode)}
-          type="button"
-        >
-          {route.mode}
-        </button>
-      ))}
+      {routes?.map((route, index) => {
+        const routeKey = getRouteKey(route, index)
+        const selectedRouteKey = selectedRoute ? getRouteKey(selectedRoute, routes.indexOf(selectedRoute)) : ''
+
+        return (
+          <button
+            aria-pressed={selectedRouteKey === routeKey}
+            className={selectedRouteKey === routeKey ? 'route-mode-tab selected' : 'route-mode-tab'}
+            key={routeKey}
+            onClick={() => setSelectedMode(routeKey)}
+            type="button"
+          >
+            {route.mode}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -750,13 +759,19 @@ function RouteInfo({ route, travelContext, userInfo }) {
 }
 
 function TravelDashboard({ selectedMode, setSelectedMode, travelContext, userInfo }) {
-  const firstMode = travelContext?.routes?.[0]?.mode || ''
-  const selectedRoute = travelContext?.routes?.find((route) => route.mode === selectedMode)
+  const firstMode = travelContext?.routes?.[0] ? getRouteKey(travelContext.routes[0], 0) : ''
+  const selectedRoute = travelContext?.routes?.find((route, index) => getRouteKey(route, index) === selectedMode)
+    || travelContext?.routes?.find((route) => route.mode === selectedMode)
     || travelContext?.routes?.[0]
 
   useEffect(() => {
-    setSelectedMode(firstMode)
-  }, [firstMode, setSelectedMode])
+    const hasSelectedRoute = travelContext?.routes?.some((route, index) => (
+      getRouteKey(route, index) === selectedMode || route.mode === selectedMode
+    ))
+    if (firstMode && !hasSelectedRoute) {
+      setSelectedMode(firstMode)
+    }
+  }, [firstMode, selectedMode, setSelectedMode, travelContext?.routes])
 
   if (!travelContext) {
     return null
@@ -811,10 +826,17 @@ function ScoreHero({ analysis }) {
   )
 }
 
-function AnalysisResultPanel({ analysis, analysisRequest, requestWarnings = [] }) {
-  const [selectedMode, setSelectedMode] = useState('')
+function AnalysisResultPanel({
+  analysis,
+  analysisRequest,
+  initialSelectedRouteMode = '',
+  onSelectedRouteModeChange,
+  requestWarnings = [],
+}) {
+  const [selectedMode, setSelectedMode] = useState(initialSelectedRouteMode)
   const fields = analysisRequest?.listingInfo?.fields || {}
-  const selectedRoute = analysis?.travelContext?.routes?.find((route) => route.mode === selectedMode)
+  const selectedRoute = analysis?.travelContext?.routes?.find((route, index) => getRouteKey(route, index) === selectedMode)
+    || analysis?.travelContext?.routes?.find((route) => route.mode === selectedMode)
     || analysis?.travelContext?.routes?.[0]
   const warningItems = [
     ...new Set([
@@ -836,14 +858,24 @@ function AnalysisResultPanel({ analysis, analysisRequest, requestWarnings = [] }
     return null
   }
 
+  function handleSelectedModeChange(nextMode) {
+    setSelectedMode(nextMode)
+    const nextRoute = analysis?.travelContext?.routes?.find((route, index) => getRouteKey(route, index) === nextMode)
+      || analysis?.travelContext?.routes?.find((route) => route.mode === nextMode)
+    onSelectedRouteModeChange?.({
+      key: nextMode,
+      mode: nextRoute?.mode || nextMode,
+    })
+  }
+
   return (
     <section className="analysis-result-panel dashboard-result-panel" aria-labelledby="analysis-result-title">
       <div className="dashboard-top-grid">
         <TravelDashboard
           selectedMode={selectedMode}
-          setSelectedMode={setSelectedMode}
+          setSelectedMode={handleSelectedModeChange}
           travelContext={analysis.travelContext}
-          userInfo={analysisRequest.userInfo}
+          userInfo={analysisRequest?.userInfo}
         />
         <CostSummaryCard costSummary={costSummary} />
       </div>
