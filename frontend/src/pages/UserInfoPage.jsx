@@ -32,7 +32,7 @@ function UserInfoPage({ onComplete }) {
     <main className="user-info-page">
       <section className="user-info-shell" aria-labelledby="page-title">
         <header className="app-header">
-          <p className="brand-name">자취방 의사결정 도우미</p>
+          <p className="brand-name">집토끼</p>
           <h1 id="page-title">사용자 정보 입력</h1>
           <p className="page-description">
             처음 한 번만 입력하면 매물 분석에서 예산과 통학 환경을 함께 반영합니다.

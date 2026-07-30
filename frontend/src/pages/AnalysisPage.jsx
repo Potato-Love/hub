@@ -61,7 +61,7 @@ function AnalysisPage({
       <main className="user-info-page">
         <section className="user-info-shell" aria-labelledby="page-title">
           <header className="app-header">
-            <p className="brand-name">자취방 의사결정 도우미</p>
+            <p className="brand-name">집토끼</p>
             <h1 id="page-title">분석 요청 오류</h1>
             <p className="page-description">
               분석할 매물 정보가 없어 요청을 시작하지 못했습니다.

@@ -1,13 +1,8 @@
 import ListingFieldsForm from './ListingFieldsForm'
 
-function OcrReviewPanel({ fields, ocrText, onFieldChange, onSave, saved, savedAt }) {
+function OcrReviewPanel({ fields, onFieldChange, onSave, saved, savedAt }) {
   return (
     <div className="review-panel">
-      <div className="ocr-text-panel">
-        <h3>OCR 원문</h3>
-        <pre>{ocrText || '아직 분석된 텍스트가 없습니다.'}</pre>
-      </div>
-
       <div className="step-heading compact-heading">
         <h2>매물 정보를 확인해주세요</h2>
         <p>자동으로 채워진 값이 맞는지 확인하고, 비어 있거나 틀린 항목은 직접 수정해주세요.</p>
@@ -24,7 +19,7 @@ function OcrReviewPanel({ fields, ocrText, onFieldChange, onSave, saved, savedAt
 
       <div className="button-row align-end">
         <button className="primary-button" type="button" onClick={onSave}>
-          매물 정보 저장
+          분석하기
         </button>
       </div>
     </div>

@@ -11,9 +11,7 @@ function ListingUploadPage({ onAnalyze, onBack }) {
     error,
     fields,
     imageName,
-    imageType,
     isProcessing,
-    ocrText,
     previewUrl,
     progressMessage,
     runOcr,
@@ -26,11 +24,16 @@ function ListingUploadPage({ onAnalyze, onBack }) {
   const listingWarnings = createListingWarnings(fields)
 
   function handleStartAnalysis() {
+    const savedListing = saveListingInfo()
+    if (!savedListing) {
+      return
+    }
+
     const result = createListingAnalysisRequest({
-      fields,
-      imageName,
-      imageType,
-      ocrText,
+      fields: savedListing.fields,
+      imageName: savedListing.imageName,
+      imageType: savedListing.imageType,
+      ocrText: savedListing.ocrText,
     })
 
     setAnalysisError(result.error)
@@ -45,10 +48,10 @@ function ListingUploadPage({ onAnalyze, onBack }) {
     <main className="user-info-page">
       <section className="user-info-shell" aria-labelledby="page-title">
         <header className="app-header">
-          <p className="brand-name">자취방 의사결정 도우미</p>
+          <p className="brand-name">집토끼</p>
           <h1 id="page-title">매물 스크린샷 업로드</h1>
           <p className="page-description">
-            부동산 플랫폼의 매물 화면을 올리면 OCR로 텍스트를 추출하고 매물 정보를 저장합니다.
+            부동산 플랫폼의 매물 화면을 올리면 OCR로 매물 정보를 채우고 바로 AI 분석을 시작합니다.
           </p>
         </header>
 
@@ -70,34 +73,20 @@ function ListingUploadPage({ onAnalyze, onBack }) {
 
           <OcrReviewPanel
             fields={fields}
-            ocrText={ocrText}
             onFieldChange={updateField}
-            onSave={saveListingInfo}
+            onSave={handleStartAnalysis}
             saved={saved}
             savedAt={savedAt}
           />
 
-          <section className="analysis-section" aria-labelledby="analysis-title">
-            <div className="step-heading compact-heading">
-              <h2 id="analysis-title">AI 분석</h2>
-              <p>현재 입력된 매물 정보와 사용자 조건을 함께 보내고, 주소가 있으면 카카오 지도 기반 통학 시간도 계산합니다.</p>
-            </div>
-
-            {analysisError && <p className="error-text" role="alert">{analysisError}</p>}
-            {listingWarnings.length > 0 && (
-              <ul className="warning-list">
-                {listingWarnings.map((warning) => (
-                  <li key={warning}>{warning}</li>
-                ))}
-              </ul>
-            )}
-
-            <div className="button-row align-end">
-              <button className="primary-button" type="button" onClick={handleStartAnalysis}>
-                AI 분석하기
-              </button>
-            </div>
-          </section>
+          {analysisError && <p className="error-text" role="alert">{analysisError}</p>}
+          {listingWarnings.length > 0 && (
+            <ul className="warning-list">
+              {listingWarnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          )}
 
           <div className="button-row">
             <button className="secondary-button" type="button" onClick={onBack}>

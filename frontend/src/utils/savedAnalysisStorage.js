@@ -63,3 +63,15 @@ export function saveAnalysisResult({ analysis, analysisRequest, selectedRouteMod
 export function findSavedAnalysis(id) {
   return loadSavedAnalyses().find((item) => item.id === id) || null
 }
+
+export function deleteSavedAnalysis(id) {
+  const nextItems = loadSavedAnalyses().filter((item) => item.id !== id)
+
+  try {
+    window.localStorage.setItem(SAVED_ANALYSES_STORAGE_KEY, JSON.stringify(nextItems))
+  } catch {
+    throw new Error('저장 목록을 수정하지 못했습니다.')
+  }
+
+  return nextItems
+}
