@@ -3,6 +3,7 @@ import FileUploadPanel from '../components/listing-upload/FileUploadPanel'
 import OcrReviewPanel from '../components/listing-upload/OcrReviewPanel'
 import { createListingAnalysisRequest } from '../hooks/useListingAnalysis'
 import { useListingUpload } from '../hooks/useListingUpload'
+import { createListingWarnings } from '../utils/listingValidation'
 
 function ListingUploadPage({ onAnalyze, onBack }) {
   const [analysisError, setAnalysisError] = useState('')
@@ -22,6 +23,7 @@ function ListingUploadPage({ onAnalyze, onBack }) {
     selectFile,
     updateField,
   } = useListingUpload()
+  const listingWarnings = createListingWarnings(fields)
 
   function handleStartAnalysis() {
     const result = createListingAnalysisRequest({
@@ -51,13 +53,6 @@ function ListingUploadPage({ onAnalyze, onBack }) {
         </header>
 
         <section className="form-card" aria-labelledby="step-title">
-          <div className="progress-header">
-            <span className="step-count">2 / 5</span>
-            <div className="progress-track" aria-hidden="true">
-              <div className="progress-value" style={{ width: '40%' }} />
-            </div>
-          </div>
-
           <div className="step-heading">
             <h2 id="step-title">스크린샷을 선택해주세요</h2>
             <p>업로드한 이미지는 브라우저에서 OCR 처리되며 서버로 저장하지 않습니다.</p>
@@ -85,10 +80,17 @@ function ListingUploadPage({ onAnalyze, onBack }) {
           <section className="analysis-section" aria-labelledby="analysis-title">
             <div className="step-heading compact-heading">
               <h2 id="analysis-title">AI 분석</h2>
-              <p>확인한 OCR 원문과 매물 정보를 사용자 조건과 함께 LLM에 보내 분석합니다.</p>
+              <p>현재 입력된 매물 정보와 사용자 조건을 함께 보내고, 주소가 있으면 카카오 지도 기반 통학 시간도 계산합니다.</p>
             </div>
 
             {analysisError && <p className="error-text" role="alert">{analysisError}</p>}
+            {listingWarnings.length > 0 && (
+              <ul className="warning-list">
+                {listingWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            )}
 
             <div className="button-row align-end">
               <button className="primary-button" type="button" onClick={handleStartAnalysis}>

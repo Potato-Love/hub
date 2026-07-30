@@ -17,7 +17,7 @@ function OcrReviewPanel({ fields, ocrText, onFieldChange, onSave, saved, savedAt
 
       {saved && (
         <p className="success-message" role="status">
-          매물 정보가 이 브라우저에 저장되었습니다.
+          입력한 매물 정보를 이 브라우저에 임시 보관했습니다.
           {savedAt ? ` 저장 시각: ${new Date(savedAt).toLocaleString('ko-KR')}` : ''}
         </p>
       )}

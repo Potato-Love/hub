@@ -2,6 +2,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
 import { GoogleGenAI } from '@google/genai'
+import { createTravelContext } from './mapService.js'
 
 dotenv.config()
 
@@ -87,12 +88,12 @@ function validateAnalyzeRequest(body) {
 }
 
 const systemInstruction =
-  '너는 대학생 첫 자취방 의사결정을 돕는 한국어 분석 도우미다. 부동산 계약의 최종 법률 판단을 대신하지 말고, 사용자가 확인해야 할 가격, 관리비, 통학, 교통비, 생활 편의성, 매물 신뢰도, 용어 이해 관점을 실용적으로 정리한다. 확실하지 않은 내용은 단정하지 말고 확인 필요로 표현한다.'
+  '너는 대학생 첫 자취방 의사결정을 돕는 한국어 분석 도우미다. 부동산 계약의 최종 법률 판단을 대신하지 말고, 사용자가 확인해야 할 가격, 관리비, 통학, 교통비, 생활 편의성, 매물 신뢰도, 용어 이해 관점을 실용적으로 정리한다. 매물 유형, 거래 유형, 공급/전용면적, 층수, 방수/욕실수, 사용승인일, 방향, 주차, 건축물 용도, 매물번호, 확인매물 날짜가 있으면 분석에 적극 반영한다. 확실하지 않은 내용은 단정하지 말고 확인 필요로 표현한다.'
 
 function createPrompt({ listingInfo, userInfo }) {
   return JSON.stringify(
     {
-      task: '사용자 정보와 매물 OCR/입력 정보를 바탕으로 자취방 의사결정 참고 분석을 구조화해서 작성해줘. 가격과 관리비는 사용자의 예산 조건과 비교하고, 통학 조건은 주당 등교 횟수와 최대 이동 시간, 선호 교통수단을 함께 고려해줘. 생활 편의성은 OCR/입력 정보에 근거가 부족하면 확인 필요로 표현해줘.',
+      task: '사용자 정보와 매물 OCR/입력 정보를 바탕으로 자취방 의사결정 참고 분석을 구조화해서 작성해줘. 가격과 관리비는 사용자의 예산 조건과 비교하고, 통학 조건은 지도 API 계산 결과, 주당 등교 횟수, 최대 이동 시간, 선호 교통수단을 함께 고려해줘. 생활 편의성은 OCR/입력 정보에 근거가 부족하면 확인 필요로 표현해줘. 지도 API 계산 결과가 unavailable 또는 partial이면 그 한계를 명확히 말하고 단정하지 마.',
       userInfo,
       listingInfo,
     },
@@ -131,10 +132,17 @@ app.post('/api/analyze-listing', async (request, response) => {
   }
 
   try {
+    const travelContext = await createTravelContext(request.body)
     const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
     const result = await client.models.generateContent({
       model,
-      contents: createPrompt(request.body),
+      contents: createPrompt({
+        ...request.body,
+        listingInfo: {
+          ...request.body.listingInfo,
+          travelContext,
+        },
+      }),
       config: {
         systemInstruction,
         responseMimeType: 'application/json',
@@ -142,7 +150,12 @@ app.post('/api/analyze-listing', async (request, response) => {
       },
     })
 
-    response.json({ analysis: JSON.parse(readGeneratedText(result)) })
+    response.json({
+      analysis: {
+        ...JSON.parse(readGeneratedText(result)),
+        travelContext,
+      },
+    })
   } catch (error) {
     const status = error?.status || 500
     const message = status === 401

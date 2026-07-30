@@ -1,5 +1,11 @@
 import { useCallback, useState } from 'react'
 import { analyzeListing } from '../utils/analysisApi'
+import {
+  createListingSummary,
+  createListingWarnings,
+  createUserSummary,
+  hasListingContent,
+} from '../utils/listingValidation'
 import { loadUserInfo } from '../utils/userInfoStorage'
 
 const defaultUserInfo = {
@@ -19,10 +25,6 @@ const defaultUserInfo = {
   housingTypes: [],
   priorities: [],
   avoidConditions: [],
-}
-
-function hasListingContent(fields, ocrText) {
-  return Boolean(ocrText.trim()) || Object.values(fields).some((value) => String(value).trim())
 }
 
 function hasRequiredUserInfo(userInfo) {
@@ -48,6 +50,10 @@ export function createListingAnalysisRequest({ fields, imageName, imageType, ocr
   return {
     error: '',
     request: {
+      createdAt: new Date().toISOString(),
+      warnings: createListingWarnings(fields),
+      userSummary: createUserSummary(userInfo),
+      listingSummary: createListingSummary(fields),
       userInfo,
       listingInfo: {
         fields,
